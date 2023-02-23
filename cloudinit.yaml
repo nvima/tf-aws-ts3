@@ -1,0 +1,51 @@
+#cloud-config
+write_files:
+  - path: /etc/systemd/system/teamspeak3.service
+    permissions: "0644"
+    owner: root
+    content: |
+      [Unit]
+      Description=Teamspeak 3 Server
+      After=network.target
+
+      [Service]
+      Type=forking
+      ExecStart=${mount_point}/teamspeak3-server_linux_amd64/ts3server_startscript.sh start serveradmin_password=${password} license_accepted=1
+      ExecStop=${mount_point}/teamspeak3-server_linux_amd64/ts3server_startscript.sh stop
+      User=ec2-user
+      Group=ec2-user
+      WorkingDirectory=${mount_point}/teamspeak3-server_linux_amd64
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /usr/bin/start-teamspeak3.sh
+    permissions: "0755"
+    owner: root
+    content: |
+      #!/bin/bash
+      
+      # Check if the mount point exists and is empty
+      if [[ ! -d "${mount_point}" || $(ls -A "${mount_point}") ]]; then
+        # Format the device only if it is not already formatted as ext4
+        if ! $(lsblk -f ${mount_device} | grep -q 'ext4'); then
+          mkfs -t ext4 ${mount_device}
+        fi
+      
+        mkdir -p ${mount_point}
+        mount ${mount_device} ${mount_point}
+      fi
+
+      # Check if the Teamspeak 3 files are already installed
+      if [[ ! -d "${mount_point}/teamspeak3-server_linux_amd64" ]]; then
+        curl -o /tmp/teamspeak3-server_linux_amd64.tar.bz2 https://files.teamspeak-services.com/releases/server/3.13.7/teamspeak3-server_linux_amd64-3.13.7.tar.bz2
+        tar -xvjf /tmp/teamspeak3-server_linux_amd64.tar.bz2 -C ${mount_point}
+        chown -R ec2-user:ec2-user ${mount_point}/teamspeak3-server_linux_amd64
+      fi
+
+      # Start the Teamspeak 3 server
+      systemctl enable teamspeak3
+      systemctl start teamspeak3
+      
+runcmd:
+  - /usr/bin/start-teamspeak3.sh 
