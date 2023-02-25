@@ -1,5 +1,6 @@
 resource "aws_ebs_volume" "instance" {
   availability_zone = "eu-central-1a"
+  type              = "gp2"
   size              = 1
 }
 
