@@ -1,6 +1,7 @@
 # Teamspeak 3 Server on AWS EC2 with Terraform
 
 This Terraform configuration launches an AWS EC2 instance with an attached EBS volume to host a Teamspeak 3 server.
+The special thing is that you can terminate the EC2 instance whenever you don't need the TS3 server. This way you save costs. Through the EBS volume, you keep your Teamspeak server configuration.
 
 ## Requirements
 
